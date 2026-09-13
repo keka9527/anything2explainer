@@ -49,7 +49,7 @@ export const DirBlur: React.FC<{bx: number; by: number; style?: React.CSSPropert
 
 // ---- 字体（全部随模板附带，OFL 许可；Noto Sans SC 含完整拉丁字形，英文片同样用它做正文/字幕）----
 export const FONT_HEAVY = `'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif`; // 全部中文：标题 900（常 scaleX .8–.85 压窄）、标签 600–800、字幕 700
-export const FONT_TECH = `'Exo 2', 'Helvetica Neue', sans-serif`; // 英文技术词：紫色粗斜体 + scaleX .8
+export const FONT_TECH = `'Exo 2', 'Helvetica Neue', sans-serif`; // 英文技术词：青绿色粗斜体 + scaleX .8
 export const FONT_WIDE = `'Audiowide', 'Orbitron', sans-serif`; // 宽体展示字（片名 / 大写缩写）
 export const FONT_ORB = `'Orbitron', 'Audiowide', sans-serif`; // 数字 / 章序号 / HUD 计数
 export const FONT_MONO = `'SF Mono', Menlo, Consolas, monospace`; // 代码 / 等宽数字

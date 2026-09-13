@@ -11,3 +11,4 @@ export * from './ProgressBar';
 export {SubtitleLine, SUB_STYLE, strokeShadow, Subtitles} from './Subtitle';
 export * from './timeline';
 export * from './Footage';
+export * from './StoryImage';

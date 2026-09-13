@@ -23,7 +23,7 @@ import {CText, PURPLE, PURPLE_LIGHT, WHITE, GLOW_PURPLE, abs} from './ui';
 /** 单条光条：黑底上的紫色渐变条 + 紫外发光 + 白芯。alpha 为整体透明度。 */
 export const LightBar: React.FC<{x: number; y: number; w: number; h: number; alpha?: number; color?: string; core?: boolean}> = ({x, y, w, h, alpha = 0.3, color = PURPLE_LIGHT, core = true}) => (
   <div style={{...abs(x, y, w, h), opacity: alpha}}>
-    <div style={{position: 'absolute', inset: 0, borderRadius: h / 2, background: `linear-gradient(90deg, transparent 0%, ${color} 16%, ${color} 84%, transparent 100%)`, boxShadow: `0 0 ${h * 2.4}px ${h * 0.9}px rgba(102,45,248,.6)`}} />
+    <div style={{position: 'absolute', inset: 0, borderRadius: h / 2, background: `linear-gradient(90deg, transparent 0%, ${color} 16%, ${color} 84%, transparent 100%)`, boxShadow: `0 0 ${h * 2.4}px ${h * 0.9}px rgba(20,184,166,.6)`}} />
     {core ? <div style={{position: 'absolute', left: w * 0.18, right: w * 0.18, top: h * 0.3, height: h * 0.4, borderRadius: h, background: 'linear-gradient(90deg, transparent 0%, #FFFFFF 28%, #FFFFFF 72%, transparent 100%)', boxShadow: '0 0 6px 1px rgba(255,255,255,.75)'}} /> : null}
   </div>
 );
@@ -60,7 +60,7 @@ export const StageLine: React.FC<{N: number; f0: number; flashAt?: number; cx?: 
   const lineW = w * (1 - Math.pow(1 - clamp01(n / 14), 2.5));
   const breathe = 0.45 + 0.15 * Math.sin(n * 0.28);
   return (
-    <div style={{position: 'absolute', left: cx - lineW / 2, top: cy - h / 2, width: lineW, height: h, borderRadius: h, background: flash >= 0 ? WHITE : `linear-gradient(90deg, transparent, ${PURPLE_LIGHT} 20%, ${PURPLE_LIGHT} 80%, transparent)`, opacity: flash >= 0 ? [0.95, 0.7, 0.35][flash] : breathe, boxShadow: flash >= 0 ? '0 0 30px 8px rgba(255,255,255,.55)' : '0 0 18px 4px rgba(102,45,248,.5)'}} />
+    <div style={{position: 'absolute', left: cx - lineW / 2, top: cy - h / 2, width: lineW, height: h, borderRadius: h, background: flash >= 0 ? WHITE : `linear-gradient(90deg, transparent, ${PURPLE_LIGHT} 20%, ${PURPLE_LIGHT} 80%, transparent)`, opacity: flash >= 0 ? [0.95, 0.7, 0.35][flash] : breathe, boxShadow: flash >= 0 ? '0 0 30px 8px rgba(255,255,255,.55)' : '0 0 18px 4px rgba(20,184,166,.5)'}} />
   );
 };
 
@@ -135,7 +135,7 @@ export const fmtInt = (v: number) => Math.round(v).toString().replace(/\B(?=(\d{
 /** len 帧内从 a 计数到 b（幂 2 缓出），返回取整字符串（千分位） */
 export const countTo = (n: number, a: number, b: number, len = 20) => fmtInt(a + (b - a) * (1 - Math.pow(1 - clamp01(n / len), 2)));
 /** 大数字：Orbitron tabular + 紫硬投影 6px + 紫柔光（片名同款"重"字处理）；unit 为下方小字 */
-export const BigNumber: React.FC<{cx: number; cy: number; value: string | number; size?: number; color?: string; family?: string; weight?: number; letterSpacing?: number; shadow?: string; unit?: string; unitSize?: number; unitColor?: string; opacity?: number; dy?: number}> = ({cx, cy, value, size = 110, color = WHITE, family = FONT_ORB, weight = 700, letterSpacing = 2, shadow = `6px 6px 0 ${PURPLE}, 0 0 28px rgba(102,45,248,.45)`, unit, unitSize = 24, unitColor = '#A0A0A1', opacity = 1, dy = -2}) => (
+export const BigNumber: React.FC<{cx: number; cy: number; value: string | number; size?: number; color?: string; family?: string; weight?: number; letterSpacing?: number; shadow?: string; unit?: string; unitSize?: number; unitColor?: string; opacity?: number; dy?: number}> = ({cx, cy, value, size = 110, color = WHITE, family = FONT_ORB, weight = 700, letterSpacing = 2, shadow = `6px 6px 0 ${PURPLE}, 0 0 28px rgba(20,184,166,.45)`, unit, unitSize = 24, unitColor = '#A0A0A1', opacity = 1, dy = -2}) => (
   <>
     <CText cx={cx} cy={cy} size={size} weight={weight} family={family} color={color} letterSpacing={letterSpacing} opacity={opacity} dy={dy} shadow={shadow} style={{fontVariantNumeric: 'tabular-nums'}}>
       {value}
@@ -226,7 +226,7 @@ export const GlowBlob: React.FC<{cx: number; cy: number; r: number; N?: number; 
   const breathe = N === undefined ? 1 : 1 + 0.15 * Math.sin((2 * Math.PI * N) / 30);
   const a = clamp01(k) * breathe * alpha;
   if (a <= 0.005) return null;
-  return <div style={{position: 'absolute', left: cx - r, top: cy - r, width: 2 * r, height: 2 * r, borderRadius: '50%', background: `radial-gradient(circle, rgba(102,45,248,${a.toFixed(3)}) 0%, rgba(102,45,248,${(a * 0.55).toFixed(3)}) 34%, rgba(102,45,248,0) 70%)`}} />;
+  return <div style={{position: 'absolute', left: cx - r, top: cy - r, width: 2 * r, height: 2 * r, borderRadius: '50%', background: `radial-gradient(circle, rgba(20,184,166,${a.toFixed(3)}) 0%, rgba(20,184,166,${(a * 0.55).toFixed(3)}) 34%, rgba(20,184,166,0) 70%)`}} />;
 };
 /** 屏幕空间顶/底暗角（推近时同步淡入 18 帧）：k 0→1。放在 CameraRig 之外（屏幕空间，不随相机）。
  *  顶带默认从 y=top(100) 起、高 topH(100)，**不压 HUD 胶囊（y 28–100）**；底带 560–687（止于进度条：条体半透明，压暗其后方会让条变暗，QC v1 C1）。 */

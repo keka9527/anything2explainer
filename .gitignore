@@ -9,6 +9,8 @@ template/fin_frames/
 template/stills/
 template/audio/
 template/public/assets/*/audio.wav
+template/public/assets/*/article/
+template/source/
 template/script/timeline.json
 template/script/timeline.md
 template/分镜表.md

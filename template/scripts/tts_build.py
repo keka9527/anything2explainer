@@ -162,6 +162,17 @@ def write_wav(path, x, sr):
         w.writeframes(pcm.tobytes())
 
 
+def load_cache_json(path):
+    """Read UTF-8 cache files and recover legacy Windows-locale cache metadata."""
+    for encoding in ('utf-8', 'gbk'):
+        try:
+            with open(path, encoding=encoding) as handle:
+                return json.load(handle)
+        except UnicodeDecodeError:
+            continue
+    raise UnicodeDecodeError('utf-8', b'', 0, 1, f'cannot decode cache metadata: {path}')
+
+
 async def synth_edge(text):
     """edge-tts：整句合成 + 词级边界（会把 text 发送到微软云端端点）。
     boundary='WordBoundary' 必须显式传：edge-tts 7.2.0 起该参数默认 'SentenceBoundary'，
@@ -171,7 +182,7 @@ async def synth_edge(text):
     import edge_tts
     mp3 = cache_path(text, '.mp3'); js = cache_path(text, '.json')
     if os.path.exists(mp3) and os.path.exists(js):
-        return mp3, json.load(open(js))
+        return mp3, load_cache_json(js)
     for attempt in range(1, EDGE_TRIES + 1):
         audio = bytearray(); words = []
         try:
@@ -193,7 +204,7 @@ async def synth_edge(text):
         print(f'  ⚠ edge-tts 第 {attempt} 次失败（{why}），{1.5 * attempt:.1f}s 后重试：{text[:16]}…')
         await asyncio.sleep(1.5 * attempt)
     open(mp3, 'wb').write(audio)
-    json.dump(words, open(js, 'w'), ensure_ascii=False)
+    json.dump(words, open(js, 'w', encoding='utf-8'), ensure_ascii=False)
     return mp3, words
 
 
@@ -442,7 +453,7 @@ async def main(narr):
           'speech_sec': round(speech_sec, 2)}
     unit, cnt = ('字', total_chars) if lang == 'zh' else ('词', total_words)
     os.makedirs(f'{ROOT}/script', exist_ok=True)
-    json.dump(tl, open(f'{ROOT}/script/timeline.json', 'w'), ensure_ascii=False, indent=1)
+    json.dump(tl, open(f'{ROOT}/script/timeline.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     with open(f'{ROOT}/script/timeline.md', 'w') as f:
         f.write(f"# 时间轴（{ENGINE} · {tl['voice']} {tl['rate']}，共 {total} 帧 = {total/FPS:.1f}s，{cnt} {unit}，语速 {cnt/max(1e-6,speech_sec):.2f} {unit}/s）\n\n")
         f.write('| 句 | 章 | 帧 from–to | 时长 | 文本（| 为字幕切分） |\n|---|---|---|---|---|\n')

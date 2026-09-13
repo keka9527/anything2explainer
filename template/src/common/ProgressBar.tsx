@@ -10,7 +10,7 @@ import {TOTAL_FRAMES, CHAPTER_STARTS, SENTENCES} from './timeline';
  * 章节切换帧来自 timeline.ts（tts_build.py 自动生成），当前章高亮保持到片尾。章名 ≤6 字为宜。
  */
 export const PROGRESS_ALPHA = 0.52;
-export const FILL_RGBA = 'rgba(190,170,250,0.52)';
+export const FILL_RGBA = 'rgba(20,184,166,0.52)';
 export const TRACK_RGBA = 'rgba(243,243,243,0.32)';
 export const BAR_TOP = 687;
 export const BAR_H = 720 - BAR_TOP;

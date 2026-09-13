@@ -3,15 +3,16 @@ import {FONT_HEAVY, FONT_TECH, FONT_MONO, FONT_ORB, TEXT_DY} from './common/lib'
 import {GlitchIn, powOutRemain, BEZ_SCALE_IN, clamp01, rnd} from './common';
 
 /**
- * 共用图元与调色板（黑填充 + 白描边 2–3px、紫 = 当前重点、橙红 = 指标/警示、灰 = 非重点、绿 = 正确）。镜头组件 `import {…} from '../../ui'`。
+ * 共用图元与调色板（黑填充 + 白描边 2–3px、青绿 = 当前重点、橙红 = 指标/警示、灰 = 非重点、绿 = 正确）。镜头组件 `import {…} from '../../ui'`。
  * 所有组件为纯函数式、绝对定位（画布 1280×720）；动画由调用方按 N 计算后传入（opacity/p/s 等）。
  */
 // ---- 调色板 ----
-export const PURPLE = '#6630F8'; // 标准胶囊紫 (102,48,248)
-export const PURPLE_LIGHT = '#A175F1'; // 亮紫（高光端 / 穿过进度条后）
-export const PURPLE_TECH = '#6530F4'; // 英文科技字紫
-export const PURPLE_DEEP = '#5A3AD5'; // 深紫（曲线 / 硬投影）
-export const PURPLE_PALE = '#E6DCFF';
+// PURPLE* names are retained for source compatibility; the current theme is teal.
+export const PURPLE = '#14B8A6';
+export const PURPLE_LIGHT = '#5EEAD4';
+export const PURPLE_TECH = '#2DD4BF';
+export const PURPLE_DEEP = '#0F766E';
+export const PURPLE_PALE = '#CCFBF1';
 export const ORANGE = '#F05F41'; // 橙红：指标数字 / 另一方 / 强调
 export const CORAL = '#F16043';
 export const RED_DEEP = '#EC081F'; // 深红警示块
@@ -23,14 +24,14 @@ export const GREY_LIGHT = '#D4D4D4';
 export const WHITE = '#FFFFFF';
 export const MAGENTA = '#D100D6';
 export const CYAN = '#58FFEE';
-export const GLOW_PURPLE = '0 0 12px 3px rgba(102,45,248,.35), 0 0 42px 14px rgba(102,45,248,.45)';
-export const GLOW_PURPLE_S = '0 0 24px 8px rgba(102,45,248,.6)';
+export const GLOW_PURPLE = '0 0 12px 3px rgba(20,184,166,.35), 0 0 42px 14px rgba(20,184,166,.45)';
+export const GLOW_PURPLE_S = '0 0 24px 8px rgba(20,184,166,.6)';
 export const GLOW_ORANGE = '0 0 40px rgba(243,95,69,.75), 0 0 100px 10px rgba(243,95,69,.25)';
 export const GLOW_RED = '0 0 60px 20px rgba(236,8,31,.42), 0 0 20px 6px rgba(236,8,31,.45)';
 export const BLOOM = 'drop-shadow(0 0 3px rgba(255,255,255,0.5))';
 export const BLOOM_SOFT = 'drop-shadow(0 0 2px rgba(255,255,255,0.35))';
 export const TEXT_GLOW = '0 0 12px rgba(255,255,255,.55), 0 0 4px rgba(255,255,255,.35)';
-export const PILL_SHADOW = 'drop-shadow(0 0 2px rgba(200,180,255,.6))';
+export const PILL_SHADOW = 'drop-shadow(0 0 2px rgba(153,246,228,.6))';
 
 // ---- 动效小工具（n = N − f0）----
 export const fadeIn = (n: number, len = 12) => clamp01(n / len);
@@ -71,8 +72,8 @@ export const mixHex = (a: string, b: string, k: number) => {
   return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * t)).join(',')})`;
 };
 /** GLOW_PURPLE 的强度版（k 0→1），配 glowOffK 做"先灭光" */
-export const glowPurple = (k: number) => `0 0 12px 3px rgba(102,45,248,${(0.35 * clamp01(k)).toFixed(3)}), 0 0 42px 14px rgba(102,45,248,${(0.45 * clamp01(k)).toFixed(3)})`;
-export const glowPurpleS = (k: number) => `0 0 24px 8px rgba(102,45,248,${(0.6 * clamp01(k)).toFixed(3)})`;
+export const glowPurple = (k: number) => `0 0 12px 3px rgba(20,184,166,${(0.35 * clamp01(k)).toFixed(3)}), 0 0 42px 14px rgba(20,184,166,${(0.45 * clamp01(k)).toFixed(3)})`;
+export const glowPurpleS = (k: number) => `0 0 24px 8px rgba(20,184,166,${(0.6 * clamp01(k)).toFixed(3)})`;
 
 export const SoftIn: React.FC<{N: number; f0: number; children: React.ReactNode; len?: number; dy?: number; style?: React.CSSProperties}> = ({N, f0, children, len = 8, dy = 10, style}) => {
   const n = N - f0;
@@ -260,7 +261,7 @@ export const TopCapsule: React.FC<{N: number; f0: number; text: string; w?: numb
 
 // ---- 漏斗层（召回→重排→生成 之类的分层筛选）----
 /** 灰→紫的非对称水平渐变 stops（原片实测：最暗平台在 t≈0.5–0.6，右半升得更慢）。k=0 灰、k=1 紫。 */
-const TRAP_STOPS: Array<[number, number, number[]]> = [[0, 224, [230, 220, 255]], [0.18, 190, [170, 140, 250]], [0.45, 160, [110, 60, 248]], [0.6, 160, [102, 45, 248]], [0.8, 178, [125, 85, 248]], [1, 224, [230, 220, 255]]];
+const TRAP_STOPS: Array<[number, number, number[]]> = [[0, 224, [204, 251, 241]], [0.18, 190, [153, 246, 228]], [0.45, 160, [45, 212, 191]], [0.6, 160, [20, 184, 166]], [0.8, 178, [13, 148, 136]], [1, 224, [204, 251, 241]]];
 export const trapStops = (k: number): Array<[number, string]> => TRAP_STOPS.map(([t, g, p]) => [t, `rgb(${p.map((v) => Math.round(g + (v - g) * k)).join(',')})`] as [number, string]);
 let trapSeq = 0;
 /** 倒梯形漏斗层：顶宽 wTop、底宽 wBot、高 h，水平渐变填充 + 2px 白边 + 居中文字。k 0→1 灰变紫（11 帧变色用）。 */
@@ -377,7 +378,7 @@ export const Gauge: React.FC<{cx: number; cy: number; r?: number; v: number; col
     <div style={{position: 'absolute', inset: 0, opacity, pointerEvents: 'none'}}>
       <svg width={1280} height={720} viewBox="0 0 1280 720" style={{position: 'absolute', left: 0, top: 0, overflow: 'visible', filter: BLOOM_SOFT}}>
         <path d={arc(a0, a1, r)} fill="none" stroke={GREY_LINE} strokeWidth={sw} strokeLinecap="round" />
-        {vv > 0.005 ? <path d={arc(a0, av, r)} fill="none" stroke={accent} strokeWidth={sw} strokeLinecap="round" style={glow ? {filter: 'drop-shadow(0 0 10px rgba(102,45,248,.85))'} : undefined} /> : null}
+        {vv > 0.005 ? <path d={arc(a0, av, r)} fill="none" stroke={accent} strokeWidth={sw} strokeLinecap="round" style={glow ? {filter: 'drop-shadow(0 0 10px rgba(20,184,166,.85))'} : undefined} /> : null}
         {Array.from({length: 9}, (_, i) => {
           const d = a0 + ((a1 - a0) * i) / 8;
           const [tx0, ty0] = toXY(d, r - sw - 4), [tx1, ty1] = toXY(d, r - sw - 14);
@@ -445,7 +446,7 @@ export const PersonIcon: React.FC<{cx: number; cy: number; size?: number; color?
   const hr = s * 0.2;
   return (
     <div style={{...abs(cx - s / 2, cy - s / 2, s, s + (label ? labelSize + 14 : 0)), opacity}}>
-      <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible', filter: glow ? 'drop-shadow(0 0 10px rgba(102,45,248,.75))' : BLOOM_SOFT}}>
+      <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible', filter: glow ? 'drop-shadow(0 0 10px rgba(20,184,166,.75))' : BLOOM_SOFT}}>
         <path d={`M${sw},${s - sw} V${s * 0.8} A${s / 2 - sw},${s * 0.3} 0 0 1 ${s - sw},${s * 0.8} V${s - sw} Z`} fill={accent ?? fill} stroke={color} strokeWidth={sw} strokeLinejoin="round" />
         <circle cx={s / 2} cy={hr + sw + s * 0.06} r={hr} fill={fill} stroke={color} strokeWidth={sw} />
       </svg>

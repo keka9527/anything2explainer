@@ -7,7 +7,7 @@
 
 **English** | [简体中文](README_ZH.md)
 
-**Topic in, narrated explainer video out.** anything2explainer is a [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill that turns any topic into a black-canvas motion-graphics explainer video with TTS voiceover, subtitles and a chapter progress bar, in Chinese or English. Every frame is drawn in code with [Remotion](https://remotion.dev) (React + TypeScript). No stock footage, no generative video model, no frames lifted from anyone else's work.
+**Topic, article, document, or public WeChat link in; narrated explainer video out.** anything2explainer is a [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill that produces an original black-canvas motion-graphics explainer with TTS voiceover, subtitles, and a chapter progress bar, in Chinese or English. Visuals are primarily drawn in [Remotion](https://remotion.dev) (React + TypeScript); approved and manifested article images may appear briefly, while protected video streams are never downloaded.
 
 It is not a CLI. What ships here is the whole method an AI coding agent needs to finish the film: a compilable Remotion template, a primitives and lighting library, tooling for voiceover / storyboard / rendering / quantitative QC, written style and motion specs, a multi-agent division-of-labour protocol, and one complete reference film as the quality bar.
 
@@ -23,7 +23,7 @@ Both cuts share one storyboard and 44 shots; the English cut re-times every shot
 
 ## What it does
 
-- **Input**: a topic ("explain vector databases"), or an article / document you want turned into a video. You also pick the length and the language.
+- **Input**: a topic ("explain vector databases"), an article / document, or a public `mp.weixin.qq.com` link. You also pick the length and the language.
 - **Output**: a 1280×720 H.264 MP4 with synchronized voiceover, word-boundary-aligned subtitles, chapter cards, a top HUD and a bottom chapter progress bar, plus the full paper trail (research doc with sources, narration, storyboard, per-shot source code, QC reports).
 - **How**: the agent researches the topic with sources, writes the narration, generates the voiceover and frame-accurate timeline, storyboards every shot, then dispatches parallel build agents that write one Remotion component per shot. QC agents review the rendered frames against written criteria before delivery.
 - **Time**: roughly 1 to 3 hours of wall clock depending on length, most of it agents building shots in parallel. You are consulted at exactly four checkpoints.
@@ -35,7 +35,7 @@ Both cuts share one storyboard and 44 shots; the English cut re-times every shot
 | Frame / rate | 1280×720 @ 30fps, H.264 |
 | Length | your call (see table below); 2–8 minutes all work |
 | Language | Chinese or English (`lang` in `src/config.ts`); typography, subtitle budgets and TTS switch with it |
-| Look | black canvas with one of two backdrops, star field + fog gradient or dot-field wave (`bg` in `src/config.ts`; the dot-field wave is ported from video-talkcraft); white line art + purple accents; ultra-bold headline type |
+| Look | black canvas with one of two backdrops, star field + fog gradient or dot-field wave (`bg` in `src/config.ts`; the dot-field wave is ported from video-talkcraft); white line art + teal accents; ultra-bold headline type |
 | Persistent layers | 44px white-on-black-stroke subtitles, bottom chapter progress bar, top capsule HUD, optional pipeline rail |
 | Voiceover | Chinese: edge-tts `zh-CN-YunxiNeural` (Yunxi, male). English: kokoro-82m `am_liam` (Liam, male). Or bring your own TTS / finished audio |
 
@@ -64,7 +64,7 @@ Dependencies:
 brew install ffmpeg          # frame extraction / transcoding, required
 
 python3 -m venv ~/.venvs/a2e && source ~/.venvs/a2e/bin/activate
-pip install 'edge-tts==7.2.8' numpy pillow scipy   # pin edge-tts: it tracks a Microsoft endpoint and breaks across upgrades (7.2.0+ needs word boundaries requested explicitly; the script does)
+pip install 'edge-tts==7.2.8' numpy pillow scipy requests beautifulsoup4
 
 # only needed for English narration (kokoro-82m runs locally)
 pip install kokoro soundfile && brew install espeak-ng
@@ -106,12 +106,14 @@ In Claude Code or Codex, just say what you want. The skill triggers itself:
 
 > Make me an explainer video about vector databases.
 
+> Turn this public WeChat article into a 300-second Chinese explainer: https://mp.weixin.qq.com/s/...
+
 > 讲一下向量数据库，做成一条讲解视频
 
 It then walks the 9 stages in `SKILL.md`:
 
 1. **Scaffold** the Remotion project from the template.
-2. **Research** (1 agent): a sourced research doc with a list of numbers and analogies, every item with a URL.
+2. **Research / source archive**: topic mode creates sourced research; article mode safely archives the text, media inventory, and asset plan before verifying claims against primary sources.
 3. **Narration & timeline**: the script, then TTS voiceover with per-word boundaries turned into a frame-accurate timeline and subtitle table.
 4. **Storyboard**: one line per shot with frame range, beat, visuals, motion, hero element and lighting.
 5. **Overlays & primitives**: title, chapter cards, HUD, pipeline rail, plus 2–5 topic-specific icons.
@@ -185,12 +187,13 @@ reference/                specs written for the main session and the agents
   composition-and-light.md  three size tiers, light follows the hero, set-piece choreography, QC metrics
   narration-storyboard.md   how to write narration, voiceover params, storyboard tokens, shot pattern table
   research-brief.md         researcher prompt and fact rules
+  article-source-workflow.md article / public WeChat archiving, asset plan, and rights boundaries
   agent-build-rules.md      build-agent protocol
   agent-qc-rules.md         QC-agent protocol
   prompts.md                six prompt templates: research / build / QC / fix / recheck / final pass
   lessons.md                every trap hit across three films, with root causes
 template/                 the compilable Remotion 4 project (copy it with scripts/new_project.sh)
-  src/common/               fog, star field, dot-field wave, glitch, easings, subtitles, progress bar, footage layer
+  src/common/               fog, star field, dot-field wave, glitch, easings, subtitles, progress bar, source-image layer
   src/ui.tsx  src/fx.tsx    primitives and palette / light, depth and camera primitives
   src/overlay/              title, chapter cards, HUD, pipeline rail, ending
   scripts/                  voiceover, storyboard, stills, test render, 30s preview, full render, QC metrics
@@ -201,11 +204,11 @@ examples/contrast/        6 bad/good frame pairs — the yardstick for compositi
 
 ## Acknowledgements
 
-The visual language and the quality bar are inspired by the Douyin creator **@图灵宇宙** — black canvas, white line art with purple accents, ultra-bold headline type: that vocabulary was learned from their videos. Everything in this repo is drawn from scratch in code; none of their frames, assets or project files are used. If you feel this crosses a line, please open an issue.
+The visual language and quality bar are inspired by the Douyin creator **@图灵宇宙** — black canvas, white line art, one accent color, and ultra-bold headline type. The current template uses teal. None of their frames, assets, or project files are used. If you feel this crosses a line, please open an issue.
 
 ## Originality
 
-- **Every frame is drawn in code.** No frames or clips from existing videos. Optional live-action B-roll must come from royalty-free sources and be logged in a MANIFEST (sha256 / source URL / license / usage).
+- **Visuals are primarily original code.** No frames or clips from existing videos. Article images or optional B-roll may appear only after rights and privacy review and must be logged in a MANIFEST (sha256 / source URL / license / usage).
 - **Every fact is sourced.** Every number, year, organisation and English term shown on screen must trace back to a source URL in that film's research document. Anything unverified stays off the screen and out of the narration.
 
 ## License
@@ -217,7 +220,8 @@ Remotion itself has its own license terms for companies — see [remotion.dev/li
 ## Known limits
 
 - Chinese and English are both supported (`lang: 'zh' | 'en'`), each with its own pacing, subtitle budget (16 chars / 48 characters per block) and default voice. Both cuts are embedded above; the paper trail in `examples/rag/` is from the Chinese cut. One visual style with two backdrops (`bg: 'stars' | 'dots'`); changing anything else means editing `reference/style-guide.md` + `src/ui.tsx`.
-- Not for: replicating an existing video, talking-head presenter footage, or films that are mostly live action.
+- The WeChat extractor supports only public HTTPS `mp.weixin.qq.com` pages and uses no cookies, login state, or script execution; other sites need separate handling under the same safety boundaries.
+- Not for: replicating an existing video, talking-head presenter footage, films that are mostly live action, or bypassing protected media delivery.
 - Once the narration is voiced, the words are frozen — shot code hard-codes frame numbers, so a rewrite re-times everything.
 - Parallel builds are demanding: several agents bundle Remotion at once, so keep ≥5 GB free; tmux panes are capped, so past ~12 you have to dispatch in waves.
 

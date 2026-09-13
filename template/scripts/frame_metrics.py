@@ -4,7 +4,7 @@
 用法：
   python3 scripts/frame_metrics.py [--frames fin_frames] [--storyboard 分镜表.md] [--shots SC11:1627-1806,SC12:1852-1965] [--step 4] [--out qc/frame_metrics_vN.md]
 默认从 分镜表.md 解析 `| SCxx … | a–b |` 行得到镜头区间；帧目录默认 fin_frames/f_%04d.jpg。
-每镜头输出：主体尺度（最大物体高度，宽物体按 min(w,4h)/2.5 折算；一行大字按整行计）中位数/最小值、空场最长连续帧数（无 ≥110 主体且无大面积光活动）、柔光面积（主角区 / 全区）中位数、紫色碎片数中位数、最长静止帧数、标记。
+每镜头输出：主体尺度（最大物体高度，宽物体按 min(w,4h)/2.5 折算；一行大字按整行计）中位数/最小值、空场最长连续帧数（无 ≥110 主体且无大面积光活动）、柔光面积（主角区 / 全区）中位数、主题色碎片数中位数、最长静止帧数、标记。
 依赖：numpy pillow scipy。亮度统计用 int32。
 """
 import argparse, os, re, sys
@@ -48,7 +48,7 @@ def dot_mask(W=1280, H=720, r=5):
     return m
 DOT_MASK = dot_mask()
 # 点阵底色 #0b0c11 本身带一点蓝（sat≈.35、lum≈12），会整屏落进「柔光」判据（sat>.25 且 10<lum<110）→ 空场检测被屏蔽、主角区柔光虚高；
-# dots 模式把柔光亮度下限抬到 22（实测底色+噪点 ≤18；紫柔光在内容区的亮度多在 25–110，基本不受影响）。
+# dots 模式把柔光亮度下限抬到 22（实测底色+噪点 ≤18；青绿柔光在内容区的亮度多在 25–110，基本不受影响）。
 SOFT_LO = 22 if BG == 'dots' else 10
 
 def parse_shots():
@@ -104,11 +104,11 @@ def analyze(i):
         if sub.any():
             lab2, n2 = ndi.label(sub)
             glow_hero = int(np.bincount(lab2.ravel())[1:].max()) if n2 else 0
-    # 紫色碎片：实心紫（排除柔光雾与虚线波纹），不膨胀，≥80px 才算一块
-    purple = (b[Z] > r[Z]) & (r[Z] > g[Z]) & (sat[Z] > 0.45) & (lum[Z] > 45)
-    lab3, n3 = ndi.label(ndi.binary_dilation(purple, structure=np.ones((7, 25), bool)))  # 把一行字的逐字硬投影并成一块
-    npurple = int((np.bincount(lab3.ravel())[1:] >= 80).sum()) if n3 else 0
-    return hero_h, glow_hero, npurple, small, int(bright.sum()), glow_total
+    # 主题色碎片：实心青绿（排除柔光雾与虚线波纹），不膨胀，≥80px 才算一块
+    accent = (g[Z] > b[Z]) & (b[Z] > r[Z]) & (sat[Z] > 0.35) & (lum[Z] > 45)
+    lab3, n3 = ndi.label(ndi.binary_dilation(accent, structure=np.ones((7, 25), bool)))  # 把一行字的逐字硬投影并成一块
+    naccent = int((np.bincount(lab3.ravel())[1:] >= 80).sum()) if n3 else 0
+    return hero_h, glow_hero, naccent, small, int(bright.sum()), glow_total
 
 def diff_series(lo, hi):
     prev = None; out = []
@@ -120,7 +120,7 @@ def diff_series(lo, hi):
 shots = parse_shots()
 if not shots:
     sys.exit('没有解析到镜头区间：检查 --storyboard 或用 --shots')
-lines = ['| 镜头 | 帧 | 主体尺度 中位/最小 px | 空场最长连续帧 | 柔光 主角区/全区 中位 px² | 紫色碎片 中位 | 最长静止帧 | 标记 |', '|---|---|---|---|---|---|---|---|']
+lines = ['| 镜头 | 帧 | 主体尺度 中位/最小 px | 空场最长连续帧 | 柔光 主角区/全区 中位 px² | 主题色碎片 中位 | 最长静止帧 | 标记 |', '|---|---|---|---|---|---|---|---|']
 flags_total = {'高': 0, '中': 0, '低': 0}
 for sid, lo, hi in shots:
     hh = []; gl = []; pp = []; sm = []; gt = []
@@ -146,7 +146,7 @@ for sid, lo, hi in shots:
     elif med_h < 170:
         flags.append('低:主角<170px')
     if float(np.median(gl)) < 800: flags.append('低:主角无光')
-    if float(np.median(pp)) >= 8: flags.append('低:紫色碎片≥8')
+    if float(np.median(pp)) >= 8: flags.append('低:主题色碎片≥8')
     if float(np.median(sm)) >= 10: flags.append('中:背景碎屑≥10')
     if sbest > 45: flags.append(f'低:静止{sbest}帧')
     for f in flags:

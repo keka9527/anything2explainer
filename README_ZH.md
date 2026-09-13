@@ -7,7 +7,7 @@
 
 [English](README.md) | **简体中文**
 
-**给一个主题，产出一条带配音的科普讲解视频。** anything2explainer 是一个 [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill：输入任意主题，输出一条黑底 MG（motion graphics）风格的讲解视频，带 TTS 配音、字幕和章节进度条，中文或英文都行。画面全部由 [Remotion](https://remotion.dev)（React + TypeScript）代码绘制，不用素材库，不用视频生成模型，也不使用任何现有视频的帧。
+**给一个主题、文章、文档或公开公众号链接，产出一条带配音的科普讲解视频。** anything2explainer 是一个 [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill：输入任意主题或资料，输出一条黑底 MG（motion graphics）风格的原创讲解视频，带 TTS 配音、字幕和章节进度条，中文或英文都行。画面以 [Remotion](https://remotion.dev)（React + TypeScript）代码绘制为主；经筛选、授权并登记的文章原图可短时入镜，但不会使用或下载受保护的视频流。
 
 它不是一个 CLI。仓库里装的是让 AI 编程 agent 把片子做出来的整套方法：可编译的 Remotion 模板工程、图元与光效库、配音/分镜/渲染/量化质检工具、风格与动效规范、多 agent 分工协议，以及一条完整样片作为质量标尺。
 
@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/e2771c68-a28c-4459-ac5a-a5b685181eeb
 
 ## 它做什么
 
-- **输入**：一个主题（"讲一下向量数据库"），或一篇想改成视频的文章/文档。时长和语言由你定。
+- **输入**：一个主题（“讲一下向量数据库”）、文章/文档，或一个公开 `mp.weixin.qq.com` 公众号链接。时长和语言由你定。
 - **输出**：1280×720 的 H.264 MP4，配音与字幕按词边界对齐，带章节卡、顶部 HUD 和底部章节进度条；同时交付全套过程文件（带出处的调研文档、解说词、分镜表、逐镜头源码、QC 报告）。
 - **怎么做**：agent 先做带出处的调研，写解说词，生成配音和帧级时间轴，逐镜头写分镜，再派多个构建 agent 并行写 Remotion 组件（一个镜头一个文件）；渲染后由 QC agent 按书面判据逐帧检查，修完再交付。
 - **耗时**：按时长约 1–3 小时，大部分时间是 agent 并行构建镜头。全程只在四个确认点问你。
@@ -35,7 +35,7 @@ https://github.com/user-attachments/assets/e2771c68-a28c-4459-ac5a-a5b685181eeb
 | 画幅 / 帧率 | 1280×720 @ 30fps，H.264 |
 | 时长 | 由你定（见下表），2–8 分钟都能做 |
 | 语言 | 中文或英文（`src/config.ts` 的 `lang`）；排版、字幕长度预算、配音默认值随它切换 |
-| 视觉 | 黑底，幕底二选一：星点 + 雾底渐变，或点阵波（`src/config.ts` 的 `bg`；点阵波移植自 video-talkcraft 的 dot-field-wave）；白线条图形 + 紫色重点；超粗黑体大字 |
+| 视觉 | 黑底，幕底二选一：星点 + 雾底渐变，或点阵波（`src/config.ts` 的 `bg`；点阵波移植自 video-talkcraft 的 dot-field-wave）；白线条图形 + 青绿色重点；超粗黑体大字 |
 | 常驻层 | 44px 白字黑边字幕、底部章节进度条、顶部胶囊 HUD、可选流程轨 |
 | 配音 | 中文 edge-tts `zh-CN-YunxiNeural`（云希，男声）/ 英文 kokoro-82m `am_liam`（Liam，男声）；也可用你自己的 TTS 或成品配音 |
 
@@ -64,7 +64,7 @@ ln -s "$PWD/anything2explainer" ~/.codex/skills/anything2explainer    # Codex
 brew install ffmpeg          # 抽帧 / 转码，必需
 
 python3 -m venv ~/.venvs/a2e && source ~/.venvs/a2e/bin/activate
-pip install 'edge-tts==7.2.8' numpy pillow scipy   # 建议固定 edge-tts 版本：它跟着微软端点变，升级常有破坏性（7.2.0 起词边界要显式请求，脚本已处理）
+pip install 'edge-tts==7.2.8' numpy pillow scipy requests beautifulsoup4
 
 # 只做英文片时再装（kokoro-82m 本地推理）
 pip install kokoro soundfile && brew install espeak-ng
@@ -106,12 +106,14 @@ TTS_ENGINE=piper PIPER_MODEL=…/en_US-ryan-medium.onnx python3 scripts/tts_buil
 
 > 讲一下向量数据库，做成一条讲解视频
 
+> 把这个公开公众号链接做成 300 秒中文讲解视频：https://mp.weixin.qq.com/s/...
+
 > Make me an explainer video about vector databases.
 
 它会按 `SKILL.md` 的 9 个阶段走：
 
 1. **建项目**：从模板复制出 Remotion 工程。
-2. **调研**（1 个 agent）：带出处的调研文档，含数字与比喻清单，每条带 URL。
+2. **调研 / 来源归档**：主题模式产出带出处调研；文章模式先安全归档正文、图片清单和素材使用计划，再用一手来源复核主张。
 3. **解说词与时间轴**：写文案，TTS 配音，按词边界生成帧级时间轴和字幕表。
 4. **分镜**：每镜头一行，写帧区间、节拍、画面、动效、主角与光。
 5. **覆盖层与图元**：片头、章节卡、HUD、流程轨，外加 2–5 个主题图标。
@@ -185,12 +187,13 @@ reference/                写给主会话与 agent 的规范
   composition-and-light.md  主体尺寸三档、光跟主角、高光时刻编排、量化判据
   narration-storyboard.md   解说词写法、配音参数、分镜令牌、镜头设计模式表
   research-brief.md         研究员 prompt 与事实规则
+  article-source-workflow.md 文章/公众号链接归档、素材清单与权利边界
   agent-build-rules.md      构建 agent 协议
   agent-qc-rules.md         QC agent 协议
   prompts.md                研究/构建/QC/修复/复验/终检六种 prompt 模板
   lessons.md                三部片子踩过的坑与根因
 template/                 可编译的 Remotion 4 项目（用 scripts/new_project.sh 复制）
-  src/common/               雾底、星点、点阵波、glitch、缓动、字幕、进度条、实拍层
+  src/common/               雾底、星点、点阵波、glitch、缓动、字幕、进度条、来源图片层
   src/ui.tsx  src/fx.tsx    图元与调色板 / 光效·纵深·运镜图元
   src/overlay/              片头、章节卡、HUD、流程轨、片尾
   scripts/                  配音、分镜、still、测渲、前 N 秒样片、整片渲染、量化质检
@@ -201,11 +204,11 @@ examples/contrast/        6 组正例/反例帧对照（构图与光的标尺）
 
 ## 致谢
 
-视觉风格的灵感与标尺来自抖音创作者 **@图灵宇宙** 的科普视频——黑底、白线条配紫色重点、超粗黑体大字这套语言是从他的片子里学来的。本项目所有画面均由代码原创绘制，不使用其任何帧、素材或工程文件；如有不妥请开 issue 告知。
+视觉风格的灵感与标尺来自抖音创作者 **@图灵宇宙** 的科普视频——黑底、白线条、单一强调色与超粗黑体大字的视觉语言由其作品启发；当前模板默认使用青绿色强调色。本项目不使用其任何帧、素材或工程文件；如有不妥请开 issue 告知。
 
 ## 原创性
 
-- **画面全部代码绘制**，不使用任何现有视频的帧或片段；可选的实拍 B-roll 只允许免版权来源，并要求登记 MANIFEST（sha256 / 来源 URL / 许可 / 用途）。
+- **画面以原创代码绘制为主**，不使用任何现有视频的帧或片段；文章原图或免版权 B-roll 只有在获得许可、完成隐私筛查并登记 MANIFEST（sha256 / 来源 URL / 许可 / 用途）后才会入镜。
 - **事实有出处**：画面上出现的每个数字、年份、机构、英文术语都必须能在该片的调研文档里找到来源 URL，没核实的不上画面也不进配音。
 
 ## 许可
@@ -217,7 +220,8 @@ Remotion 自身对公司用户另有授权要求，见 [remotion.dev/license](ht
 ## 已知限制
 
 - 中英文都支持（`lang: 'zh' | 'en'`），各有自己的语速、字幕块预算（每块 16 字 / 48 字符）与默认音色。两版成片都嵌在上方；`examples/rag/` 的过程文件是中文版的。只做这一种视觉风格，幕底二选一（`bg: 'stars' | 'dots'`），其他要换就改 `reference/style-guide.md` + `src/ui.tsx`。
-- 不适用：复刻某条现有视频、真人口播、以实拍为主的片子。
+- 公众号提取器只支持公开 HTTPS `mp.weixin.qq.com` 页面，不使用 Cookie、登录态或脚本执行；其他网页需按相同安全边界单独处理。
+- 不适用：复刻某条现有视频、真人口播、以实拍为主的片子，或绕过防盗链下载受保护媒体。
 - 解说词一旦配音定稿就不能改词（镜头代码里硬编码帧号），改词等于全片重对位。
 - 并行构建对机器有要求：多个 agent 同时跑 Remotion bundle，建议预留 ≥5GB 磁盘；tmux pane 有上限，超过 12 个要分波派。
 
