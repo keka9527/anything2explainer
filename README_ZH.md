@@ -37,7 +37,7 @@ https://github.com/user-attachments/assets/e2771c68-a28c-4459-ac5a-a5b685181eeb
 | 语言 | 中文或英文（`src/config.ts` 的 `lang`）；排版、字幕长度预算、配音默认值随它切换 |
 | 视觉 | 黑底，幕底二选一：星点 + 雾底渐变，或点阵波（`src/config.ts` 的 `bg`；点阵波移植自 video-talkcraft 的 dot-field-wave）；白线条图形 + 青绿色重点；超粗黑体大字 |
 | 常驻层 | 44px 白字黑边字幕、底部章节进度条、顶部胶囊 HUD、可选流程轨 |
-| 配音 | 中文 edge-tts `zh-CN-YunxiNeural`（云希，男声）/ 英文 kokoro-82m `am_liam`（Liam，男声）；也可用你自己的 TTS 或成品配音 |
+| 配音 | 中文优先支持火山引擎 TTS 2.0（自然段连贯合成 + 本地 Whisper 字幕对齐），未配置时用 edge-tts `zh-CN-YunxiNeural`；英文用 kokoro-82m `am_liam`；也可使用成品配音 |
 
 时长决定内容丰富程度与全流程规模：
 
@@ -50,6 +50,8 @@ https://github.com/user-attachments/assets/e2771c68-a28c-4459-ac5a-a5b685181eeb
 章数不由时长决定：一章讲透或多章概览都可以，进度条按解说词声明的章数等宽分段。
 
 ## 安装
+
+火山中文自然配音：把 `template/.env.example` 复制到视频工程根目录并命名为 `.env`，只填写本机的 `VOLCENGINE_TTS_API_KEY`，然后运行 `python scripts/tts_build.py script/narration.txt`。空行定义自然段；同段一次合成，字幕随后本地对齐。完整说明见 [`reference/volcengine-tts.md`](reference/volcengine-tts.md)。
 
 ```bash
 git clone https://github.com/Vincentwei1021/anything2explainer.git

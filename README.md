@@ -37,7 +37,7 @@ Both cuts share one storyboard and 44 shots; the English cut re-times every shot
 | Language | Chinese or English (`lang` in `src/config.ts`); typography, subtitle budgets and TTS switch with it |
 | Look | black canvas with one of two backdrops, star field + fog gradient or dot-field wave (`bg` in `src/config.ts`; the dot-field wave is ported from video-talkcraft); white line art + teal accents; ultra-bold headline type |
 | Persistent layers | 44px white-on-black-stroke subtitles, bottom chapter progress bar, top capsule HUD, optional pipeline rail |
-| Voiceover | Chinese: edge-tts `zh-CN-YunxiNeural` (Yunxi, male). English: kokoro-82m `am_liam` (Liam, male). Or bring your own TTS / finished audio |
+| Voiceover | Chinese: Volcengine TTS 2.0 with paragraph synthesis and local Whisper subtitle alignment when configured; otherwise edge-tts `zh-CN-YunxiNeural`. English: kokoro-82m `am_liam`. Finished audio is also supported. |
 
 Length drives how much ground the film covers, and the size of the whole pipeline:
 
@@ -50,6 +50,8 @@ Length drives how much ground the film covers, and the size of the whole pipelin
 Chapter count is not tied to length. One chapter that goes deep or several short ones both work; the progress bar splits evenly across however many chapters the narration declares.
 
 ## Install
+
+For natural Chinese narration, copy `template/.env.example` to `.env` in the generated video project, set `VOLCENGINE_TTS_API_KEY` locally, and run `python scripts/tts_build.py script/narration.txt`. Blank lines delimit paragraphs; each paragraph is synthesized in one request and subtitles are aligned afterwards. See [`reference/volcengine-tts.md`](reference/volcengine-tts.md).
 
 ```bash
 git clone https://github.com/Vincentwei1021/anything2explainer.git

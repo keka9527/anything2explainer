@@ -1,5 +1,6 @@
 .DS_Store
 *.log
+.env
 
 # 模板工程被安装/跑过之后产生的东西（模板本身只提交源码与字体）
 node_modules/

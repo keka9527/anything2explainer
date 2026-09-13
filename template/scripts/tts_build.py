@@ -13,6 +13,8 @@
 逐句（或逐字幕块）缓存于 audio/cache/，改一句只重合成一句；缓存键含引擎参数与本地模型文件的指纹（路径 + 大小 + mtime + 内容头），换模型自动失效。
 
 TTS 引擎（`TTS_ENGINE`，默认 `auto` = 按解说词语言选；**跑之前先问用户有没有偏好的 TTS**，见 SKILL.md 确认点 3）：
+  volcengine 中文优先。火山引擎 TTS 2.0 按空行划分自然段、整段合成，再用本地 faster-whisper 对齐字幕。
+             配置见 reference/volcengine-tts.md；Key 只放工程根目录 `.env`。
   edge     中文默认。edge-tts 云端合成，有词级边界 → 字幕节拍最准。VOICE=zh-CN-YunxiNeural RATE=+8%
            词边界要显式请求（boundary='WordBoundary'，7.2.0 起的默认值不给），否则字幕起点会静默退化成插值。
   kokoro   英文默认。kokoro-82m 本地推理（`pip install kokoro soundfile` + espeak-ng：macOS `brew install espeak-ng` / Linux `apt install espeak-ng`）。
@@ -32,6 +34,11 @@ import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REM = ROOT
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(ROOT, '.env'))
+except ImportError:
+    pass
 _cfg = open(f'{ROOT}/src/config.ts', encoding='utf-8').read()
 SLUG = re.search(r"slug:\s*'([^']+)'", _cfg).group(1)
 _m = re.search(r"lang:\s*'(zh|en)'", _cfg)
@@ -54,6 +61,15 @@ KOKORO_ONNX_VOICES = os.environ.get('KOKORO_ONNX_VOICES', '')  # 例：voices-v1
 KOKORO_ONNX_VOICE = os.environ.get('KOKORO_ONNX_VOICE', 'am_michael')
 KOKORO_ONNX_LANG = os.environ.get('KOKORO_ONNX_LANG', 'en-us')
 CHUNK_PAD = float(os.environ.get('CHUNK_PAD', 0.06))  # 无词边界引擎：块间静音秒
+VOLCENGINE_API_KEY = os.environ.get('VOLCENGINE_TTS_API_KEY') or os.environ.get('MODEL_SPEECH_API_KEY', '')
+VOLCENGINE_SPEAKER = os.environ.get('VOLCENGINE_TTS_SPEAKER', 'zh_female_vv_uranus_bigtts')
+VOLCENGINE_RESOURCE_ID = os.environ.get('VOLCENGINE_TTS_RESOURCE_ID', 'seed-tts-2.0')
+VOLCENGINE_SPEECH_RATE = int(os.environ.get('VOLCENGINE_TTS_SPEECH_RATE', '0'))
+VOLCENGINE_LOUDNESS_RATE = int(os.environ.get('VOLCENGINE_TTS_LOUDNESS_RATE', '0'))
+VOLCENGINE_PITCH = int(os.environ.get('VOLCENGINE_TTS_PITCH', '0'))
+VOLCENGINE_ENDPOINT = 'https://openspeech.bytedance.com/api/v3/tts/unidirectional/sse'
+VOLCENGINE_ALIGN_MODEL = os.environ.get('VOLCENGINE_ALIGN_MODEL', 'base')
+PARAGRAPH_GAP = int(os.environ.get('PARAGRAPH_GAP', '6'))
 
 
 def _file_fp(path):
@@ -81,8 +97,8 @@ LEAD = int(os.environ.get('LEAD', 40))        # 片头静音帧
 TAIL = int(os.environ.get('TAIL', 90))        # 片尾静音帧
 CACHE = f'{ROOT}/audio/cache'
 os.makedirs(CACHE, exist_ok=True)
-if ENGINE not in ('auto', 'edge', 'kokoro', 'piper', 'kokoro_onnx'):
-    raise SystemExit(f'未知 TTS_ENGINE={ENGINE}（可选 auto / edge / kokoro / piper / kokoro_onnx）')
+if ENGINE not in ('auto', 'edge', 'volcengine', 'kokoro', 'piper', 'kokoro_onnx'):
+    raise SystemExit(f'未知 TTS_ENGINE={ENGINE}（可选 auto / edge / volcengine / kokoro / piper / kokoro_onnx）')
 
 
 def parse(path):
@@ -90,14 +106,19 @@ def parse(path):
     chap = 0
     chap_title = ''
     pending_gap = 0
+    last_was_sent = False
     for raw in open(path, encoding='utf-8'):
         line = raw.strip()
         if not line:
+            if last_was_sent and (not items or items[-1]['type'] != 'paragraph'):
+                items.append({'type': 'paragraph'})
+            last_was_sent = False
             continue
         m = re.match(r'^#\s*CHAPTER\s+(\d+)\s+(.*)$', line)
         if m:
             chap = int(m.group(1)); chap_title = m.group(2).strip()
             items.append({'type': 'chapter', 'chapter': chap, 'title': chap_title})
+            last_was_sent = False
             continue
         m = re.match(r'^##\s*gap\s+(\d+)', line)
         if m:
@@ -105,13 +126,14 @@ def parse(path):
         if line.startswith('#'):
             continue
         items.append({'type': 'sent', 'chapter': chap, 'raw': line, 'gap_before': pending_gap})
+        last_was_sent = True
         pending_gap = 0
     return items
 
 
 def cache_path(text, ext):
     # 本地模型引擎用文件指纹而不是文件名：不同目录下的同名 model.onnx、原地换掉的模型都要各自缓存
-    sig = f'{ENGINE}|{VOICE}|{RATE}|{KOKORO_VOICE}|{KOKORO_ONNX_VOICE}|{KOKORO_ONNX_LANG}|{KOKORO_ONNX_FP}|{PIPER_FP}|{KOKORO_LANG}|{KOKORO_SPEED}|{text}'
+    sig = f'{ENGINE}|{VOICE}|{RATE}|{VOLCENGINE_SPEAKER}|{VOLCENGINE_RESOURCE_ID}|{VOLCENGINE_SPEECH_RATE}|{VOLCENGINE_LOUDNESS_RATE}|{VOLCENGINE_PITCH}|{KOKORO_VOICE}|{KOKORO_ONNX_VOICE}|{KOKORO_ONNX_LANG}|{KOKORO_ONNX_FP}|{PIPER_FP}|{KOKORO_LANG}|{KOKORO_SPEED}|{text}'
     return f'{CACHE}/{hashlib.sha1(sig.encode()).hexdigest()[:16]}{ext}'
 
 
@@ -376,6 +398,45 @@ async def synth_sentence(chunks, sep=''):
     return x, starts, len(x) / SR
 
 
+async def synth_volcengine_paragraph(sentence_chunks, sep=''):
+    """整段合成一次，再在本地对齐所有字幕块，避免逐句音色重置和人为静音。"""
+    from volcengine_tts import align_chunks, synthesize
+    flat_chunks = [chunk for chunks in sentence_chunks for chunk in chunks]
+    sentence_texts = [sep.join(chunks) for chunks in sentence_chunks]
+    text = ''.join(sentence_texts) if sep == '' else ' '.join(sentence_texts)
+    mp3 = cache_path(text, '.mp3')
+    alignment = cache_path(text, '.align.json')
+    if not os.path.exists(mp3):
+        try:
+            audio = await synthesize(
+                text, VOLCENGINE_API_KEY, VOLCENGINE_SPEAKER, VOLCENGINE_RESOURCE_ID,
+                VOLCENGINE_SPEECH_RATE, VOLCENGINE_LOUDNESS_RATE, VOLCENGINE_PITCH,
+            )
+        except Exception as exc:
+            raise SystemExit(f'火山引擎 TTS 2.0 合成失败：{exc}') from exc
+        with open(mp3, 'wb') as handle:
+            handle.write(audio)
+    x, lead_cut = trim_edges(decode(mp3))
+    if os.path.exists(alignment):
+        starts = load_cache_json(alignment)
+    else:
+        try:
+            starts = align_chunks(mp3, flat_chunks, VOLCENGINE_ALIGN_MODEL, 'zh')
+        except Exception as exc:
+            raise SystemExit(f'火山配音已生成，但本地字幕对齐失败：{exc}') from exc
+        starts = [max(0.0, float(value) - lead_cut) for value in starts]
+        with open(alignment, 'w', encoding='utf-8') as handle:
+            json.dump(starts, handle, ensure_ascii=False)
+    starts[0] = 0.0
+    dur = len(x) / SR
+    nested = []
+    cursor = 0
+    for chunks in sentence_chunks:
+        nested.append(starts[cursor:cursor + len(chunks)])
+        cursor += len(chunks)
+    return x, nested, dur
+
+
 async def main(narr):
     global ENGINE
     items = parse(narr)
@@ -393,10 +454,54 @@ async def main(narr):
     sentences = []; chapters = []
     sid = 0
     total_chars = 0; total_words = 0; speech_sec = 0.0
-    for it in items:
+    index = 0
+    while index < len(items):
+        it = items[index]
         if it['type'] == 'chapter':
             t += CHAPTER_GAP / FPS
             chapters.append({'n': it['chapter'], 'title': it['title'], 'from': int(round(t * FPS)) + 1})
+            index += 1
+            continue
+        if it['type'] == 'paragraph':
+            t += PARAGRAPH_GAP / FPS
+            index += 1
+            continue
+        if ENGINE == 'volcengine':
+            paragraph = []
+            while index < len(items) and items[index]['type'] == 'sent':
+                paragraph.append(items[index]); index += 1
+            sentence_chunks = [[c.strip() for c in row['raw'].split('|') if c.strip()] for row in paragraph]
+            sentence_chunks = [chunks for chunks in sentence_chunks if chunks]
+            if not sentence_chunks:
+                continue
+            paragraph_start = t
+            x, nested_starts, paragraph_dur = await synth_volcengine_paragraph(sentence_chunks, sep)
+            flat_sentence_starts = [starts[0] for starts in nested_starts]
+            for row_i, (row, chunks, starts) in enumerate(zip(paragraph, sentence_chunks, nested_starts)):
+                sentence_start = paragraph_start + starts[0]
+                sentence_end_rel = (flat_sentence_starts[row_i + 1]
+                                    if row_i + 1 < len(flat_sentence_starts) else paragraph_dur)
+                sentence_end = paragraph_start + max(starts[0], sentence_end_rel)
+                sid += 1
+                tts_text = sep.join(chunks)
+                sub_ranges = []
+                for chunk_i, chunk_start in enumerate(starts):
+                    chunk_end = (starts[chunk_i + 1] if chunk_i + 1 < len(starts)
+                                 else sentence_end_rel)
+                    sub_ranges.append((paragraph_start + chunk_start,
+                                       paragraph_start + max(chunk_start, chunk_end)))
+                sentences.append({
+                    'id': f'S{sid:02d}', 'chapter': row['chapter'],
+                    'from': int(round(sentence_start * FPS)) + 1,
+                    'to': int(round(sentence_end * FPS)), 'text': tts_text,
+                    'subs': [{'from': int(round(a * FPS)) + 1, 'to': int(round(b * FPS)), 'text': c}
+                             for c, (a, b) in zip(chunks, sub_ranges)],
+                })
+                total_chars += len(re.sub(r'[，。、！？：；“”（）,.!?:;()\-—…\s]', '', tts_text))
+                total_words += len(tts_text.split())
+            audio_parts.append((paragraph_start, x))
+            speech_sec += paragraph_dur
+            t = paragraph_start + paragraph_dur
             continue
         t += it['gap_before'] / FPS
         raw = it['raw']
@@ -414,6 +519,7 @@ async def main(narr):
         total_chars += len(re.sub(r'[，。、！？：；“”（）,.!?:;()\-—…\s]', '', tts_text))
         total_words += len(tts_text.split()); speech_sec += dur
         t += dur + GAP / FPS
+        index += 1
     t += TAIL / FPS
     total = int(np.ceil(t * FPS))
     # 合成音轨
@@ -446,8 +552,8 @@ async def main(narr):
             print(f"    f{sb['from']} (≈{w:.0f}px{'，会折两行' if w > SUB_MAX_W * 1.3 else ''}) {sb['text']}")
     # 输出
     tl = {'fps': FPS, 'total_frames': total, 'engine': ENGINE,
-          'voice': {'edge': VOICE, 'piper': PIPER_VOICE_NAME, 'kokoro_onnx': KOKORO_ONNX_VOICE}.get(ENGINE, KOKORO_VOICE),
-          'rate': RATE if ENGINE == 'edge' else KOKORO_SPEED,
+          'voice': {'edge': VOICE, 'volcengine': VOLCENGINE_SPEAKER, 'piper': PIPER_VOICE_NAME, 'kokoro_onnx': KOKORO_ONNX_VOICE}.get(ENGINE, KOKORO_VOICE),
+          'rate': RATE if ENGINE == 'edge' else (VOLCENGINE_SPEECH_RATE if ENGINE == 'volcengine' else KOKORO_SPEED),
           'gap': GAP, 'chapter_gap': CHAPTER_GAP, 'lead': LEAD, 'tail': TAIL,
           'lang': lang, 'chapters': chapters, 'sentences': sentences, 'chars': total_chars, 'words': total_words,
           'speech_sec': round(speech_sec, 2)}

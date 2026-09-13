@@ -38,7 +38,7 @@ description: 把主题、文章、文档或公开微信公众号链接制作成�
 
    中文约 6 字/秒；英文 edge-tts 约 2.9 词/秒，kokoro `am_liam` 实测约 2.3 词/秒。时长由用户定，章数由内容结构决定。
 2. **解说词与素材计划定稿**：展示 `script/narration.txt` 全文、章节、字数 / 预估时长。文章模式同时展示 `source/asset-plan.md`，说明哪些图片在哪个镜头出现、哪些被排除及原因。确认后不再改词；改一个字会让全片帧号重排。
-3. **配音**：询问偏好的 TTS。无偏好时中文用 edge-tts `zh-CN-YunxiNeural`（+8%），英文用 kokoro-82m `am_liam`；也可接收用户提供的成品音频。
+3. **配音**：询问偏好的 TTS。中文工程若 `.env` 已配置 `VOLCENGINE_TTS_API_KEY`，默认用火山引擎 TTS 2.0 按自然段连贯合成，再以本地 Whisper 对齐字幕；未配置时用 edge-tts `zh-CN-YunxiNeural`（+8%）。英文默认 kokoro-82m `am_liam`；也可接收用户提供的成品音频。火山配置与费用边界见 `reference/volcengine-tts.md`。
 4. **前 30 秒样片**：只做 G1 并渲染前 30 秒，确认风格、字号、语速与节奏。文章模式的样片必须实际放入至少一张计划使用的来源图片，并检查首句三路同步；不要用“全代码占位样片”冒充最终素材策略。用户确认并要求一次性完成后，继续整片、QC 与交付，不再额外停顿。
 
 ## 流程
@@ -55,7 +55,7 @@ description: 把主题、文章、文档或公开微信公众号链接制作成�
 
 ### 2. 解说词与时间轴
 
-先读 `reference/narration-guidance.md`，再按 `reference/narration-storyboard.md` 写 `script/narration.txt`。文章不是逐字改写：提炼一条主线、保留必要事实、删除宣传话术，并明确“文章记录的演示”与“已经普遍可用”的区别。经过确认点 2 和 3 后运行 `python3 scripts/tts_build.py`，生成音频、`timeline.ts`、`subs.ts` 与 `script/timeline.md`。实际时长偏离目标 >15% 时改文案重跑，不靠极端语速硬凑。
+先读 `reference/narration-guidance.md`，再按 `reference/narration-storyboard.md` 写 `script/narration.txt`。文章不是逐字改写：提炼一条主线、保留必要事实、删除宣传话术，并明确“文章记录的演示”与“已经普遍可用”的区别。经过确认点 2 和 3 后运行 `python3 scripts/tts_build.py`，生成音频、`timeline.ts`、`subs.ts` 与 `script/timeline.md`。火山模式中空行定义自然段：同段连贯合成，字幕后对齐；不要把每句拆成一次请求。实际时长偏离目标 >15% 时改文案重跑，不靠极端语速或人为静音硬凑。
 
 ### 3. 分镜
 
@@ -88,6 +88,7 @@ description: 把主题、文章、文档或公开微信公众号链接制作成�
 | `reference/article-source-workflow.md` | 输入是文章、文档或公开链接时必读 |
 | `reference/narration-guidance.md` | 写解说词前必读 |
 | `reference/narration-storyboard.md` | 时间轴、字幕切块与分镜格式 |
+| `reference/volcengine-tts.md` | 火山 TTS 2.0 开通、`.env`、自然段合成与字幕对齐 |
 | `reference/style-guide.md` | 安全区、青绿调色板、字体与图元 |
 | `reference/composition-and-light.md` | 主体尺寸、光、高光时刻与 QC 判据 |
 | `reference/motion-vocabulary.md` | 入场、强调、离场和运镜公式 |
