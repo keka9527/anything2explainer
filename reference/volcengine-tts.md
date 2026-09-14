@@ -18,6 +18,17 @@
 
 `.env` 已被 Git 忽略。不要把 Key 写入 `SKILL.md`、命令、日志、截图或聊天。
 
+新版控制台使用 `VOLCENGINE_TTS_API_KEY`，资源通常是 `seed-tts-2.0`。如果免费额度显示在带 AppID 的旧版应用中，则使用该应用的 AppID 和 Access Token：
+
+```dotenv
+VOLCENGINE_TTS_API_KEY=
+VOLCENGINE_TTS_APP_ID=你的APP_ID
+VOLCENGINE_TTS_ACCESS_KEY=该应用的Access_Token
+VOLCENGINE_TTS_RESOURCE_ID=volc.service_type.10029
+```
+
+两种鉴权不要混用。API Key 不能冒充旧应用 Access Token；程序只要检测到 `VOLCENGINE_TTS_APP_ID`，就会切换到旧应用鉴权。
+
 ## 生成
 
 解说词中：一行是一句，`|` 只切字幕；空行表示自然段。火山引擎模式会把同一自然段的多句连贯合成，不会在每句之间硬塞静音。

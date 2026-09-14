@@ -24,10 +24,10 @@ def _event_payload(line):
         return None
 
 
-async def synthesize(text, api_key, speaker, resource_id='seed-tts-2.0',
+async def synthesize(text, api_key, speaker, resource_id='seed-tts-2.0', app_id='',
                      speech_rate=0, loudness_rate=0, pitch=0, sample_rate=24000):
     if not api_key:
-        raise RuntimeError('缺少 VOLCENGINE_TTS_API_KEY（也兼容 MODEL_SPEECH_API_KEY）')
+        raise RuntimeError('缺少火山凭据：新版填写 VOLCENGINE_TTS_API_KEY；旧应用填写 VOLCENGINE_TTS_ACCESS_KEY')
     if not -50 <= speech_rate <= 100:
         raise ValueError('VOLCENGINE_TTS_SPEECH_RATE 必须在 -50 到 100')
     if not -50 <= loudness_rate <= 100 or not -12 <= pitch <= 12:
@@ -58,8 +58,12 @@ async def synthesize(text, api_key, speaker, resource_id='seed-tts-2.0',
         'Content-Type': 'application/json',
         'X-Api-Resource-Id': resource_id,
         'X-Api-Request-Id': str(uuid.uuid4()),
-        'X-Api-Key': api_key,
     }
+    if app_id:
+        headers['X-Api-App-Id'] = app_id
+        headers['X-Api-Access-Key'] = api_key
+    else:
+        headers['X-Api-Key'] = api_key
     audio = bytearray()
     async with httpx.AsyncClient(timeout=120) as client:
         async with client.stream('POST', ENDPOINT, headers=headers, json=body) as response:
