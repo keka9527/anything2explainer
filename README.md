@@ -11,15 +11,11 @@
 
 It is not a CLI. What ships here is the whole method an AI coding agent needs to finish the film: a compilable Remotion template, a primitives and lighting library, tooling for voiceover / storyboard / rendering / quantitative QC, written style and motion specs, a multi-agent division-of-labour protocol, and one complete reference film as the quality bar.
 
-**English cut** — *RAG & Knowledge Bases*, 5′02″, 44 lines / 785 words, voiced by kokoro-82m `am_liam` at natural speed:
+**Keka derivative-work case study** — *AI Risk and Civilizational Choice*, produced from a public WeChat article. The finished Chinese film runs 5′00″ with 48 narration lines / 1,279 characters, black-canvas motion graphics, Volcengine TTS 2.0 paragraph synthesis, local Whisper subtitle alignment, and continuous cross-sentence visuals. It demonstrates the complete article-to-video workflow: source archiving, fact checking, adaptation, narration, subtitles, animation, and QC.
 
-https://github.com/user-attachments/assets/e2771c68-a28c-4459-ac5a-a5b685181eeb
+[▶ Watch / download the complete 300-second film](media/keka-ai-risk-volcengine-tts2.mp4)
 
-**Chinese cut** — *RAG 与知识库* v2, 4′54″, 44 lines / 1490 characters, dot-field backdrop (`bg: 'dots'`), voiced through the bring-your-own-TTS path (Volcengine TTS 2.0 + forced alignment):
-
-https://github.com/user-attachments/assets/5c213990-cbba-439e-8371-fbb3aa348e05
-
-Both cuts share one storyboard and 44 shots; the English cut re-times every shot to the English voiceover. The full paper trail of the original Chinese cut (4′35″, star-field backdrop, 8 build agents in parallel for 40 minutes, two QC rounds) lives in [`examples/rag/`](examples/rag/) (research → narration → storyboard → shot source → QC reports → delivery notes); rendered frames are in [`examples/rag/frames/`](examples/rag/frames/).
+The retained [`examples/rag/`](examples/rag/) directory is upstream template process material showing how research, narration, storyboards, shot source, QC, and delivery files are organized. The current homepage quality sample is Keka's *AI Risk and Civilizational Choice*.
 
 ## What it does
 
@@ -177,7 +173,7 @@ The toolkit is licensed under PolyForm Noncommercial: free for noncommercial use
 Not currently. The template and every safe-area rule assume 1280×720 landscape.
 
 **Which languages?**
-Chinese and English. Each has its own pacing model, subtitle budget and default voice. Both cuts are embedded at the top of this page; the written paper trail in `examples/rag/` is from the Chinese cut.
+Chinese and English. Each has its own pacing model, subtitle budget and default voice. The Chinese Keka case study is linked at the top of this page; `examples/rag/` retains the upstream process-material example.
 
 ## Repo layout
 
@@ -221,7 +217,7 @@ Remotion itself has its own license terms for companies — see [remotion.dev/li
 
 ## Known limits
 
-- Chinese and English are both supported (`lang: 'zh' | 'en'`), each with its own pacing, subtitle budget (16 chars / 48 characters per block) and default voice. Both cuts are embedded above; the paper trail in `examples/rag/` is from the Chinese cut. One visual style with two backdrops (`bg: 'stars' | 'dots'`); changing anything else means editing `reference/style-guide.md` + `src/ui.tsx`.
+- Chinese and English are both supported (`lang: 'zh' | 'en'`), each with its own pacing, subtitle budget (16 chars / 48 characters per block) and default voice. The Keka Chinese case study is linked above; `examples/rag/` retains upstream process materials. One visual style with two backdrops (`bg: 'stars' | 'dots'`); changing anything else means editing `reference/style-guide.md` + `src/ui.tsx`.
 - The WeChat extractor supports only public HTTPS `mp.weixin.qq.com` pages and uses no cookies, login state, or script execution; other sites need separate handling under the same safety boundaries.
 - Not for: replicating an existing video, talking-head presenter footage, films that are mostly live action, or bypassing protected media delivery.
 - Once the narration is voiced, the words are frozen — shot code hard-codes frame numbers, so a rewrite re-times everything.
