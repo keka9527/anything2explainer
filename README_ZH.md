@@ -1,4 +1,4 @@
-# anything2explainer
+# keka-anything-explainer
 
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-D97757?logo=anthropic&logoColor=white)](https://claude.com/claude-code)
 [![Codex](https://img.shields.io/badge/Codex-skill-000000)](https://openai.com/codex)
@@ -7,7 +7,7 @@
 
 [English](README.md) | **简体中文**
 
-**给一个主题、文章、文档或公开公众号链接，产出一条带配音的科普讲解视频。** anything2explainer 是一个 [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill：输入任意主题或资料，输出一条黑底 MG（motion graphics）风格的原创讲解视频，带 TTS 配音、字幕和章节进度条，中文或英文都行。画面以 [Remotion](https://remotion.dev)（React + TypeScript）代码绘制为主；经筛选、授权并登记的文章原图可短时入镜，但不会使用或下载受保护的视频流。
+**给一个主题、文章、文档或公开公众号链接，产出一条带配音的科普讲解视频。** keka-anything-explainer 是科卡维护的 [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) Skill：输入任意主题或资料，输出一条黑底 MG（motion graphics）风格的原创讲解视频，带 TTS 配音、字幕和章节进度条，中文或英文都行。画面以 [Remotion](https://remotion.dev)（React + TypeScript）代码绘制为主；经筛选、授权并登记的文章原图可短时入镜，但不会使用或下载受保护的视频流。
 
 它不是一个 CLI。仓库里装的是让 AI 编程 agent 把片子做出来的整套方法：可编译的 Remotion 模板工程、图元与光效库、配音/分镜/渲染/量化质检工具、风格与动效规范、多 agent 分工协议，以及一条完整样片作为质量标尺。
 
@@ -50,9 +50,9 @@
 火山中文自然配音：把 `template/.env.example` 复制到视频工程根目录并命名为 `.env`，只填写本机的 `VOLCENGINE_TTS_API_KEY`，然后运行 `python scripts/tts_build.py script/narration.txt`。空行定义自然段；同段一次合成，字幕随后本地对齐。完整说明见 [`reference/volcengine-tts.md`](reference/volcengine-tts.md)。
 
 ```bash
-git clone https://github.com/Vincentwei1021/anything2explainer.git
-ln -s "$PWD/anything2explainer" ~/.claude/skills/anything2explainer   # Claude Code
-ln -s "$PWD/anything2explainer" ~/.codex/skills/anything2explainer    # Codex
+git clone https://github.com/keka9527/anything2explainer.git keka-anything-explainer
+ln -s "$PWD/keka-anything-explainer" ~/.claude/skills/keka-anything-explainer   # Claude Code
+ln -s "$PWD/keka-anything-explainer" ~/.codex/skills/keka-anything-explainer    # Codex
 ```
 
 依赖：
@@ -142,7 +142,7 @@ cd ~/work/my-video
 
 ## 和其他工具的区别
 
-| 工具类型 | 产出什么 | anything2explainer 的不同 |
+| 工具类型 | 产出什么 | keka-anything-explainer 的不同 |
 |---|---|---|
 | 视频生成模型（Sora、Veo、可灵、即梦） | 按提示词生成的画面 | 确定性代码而不是像素：画面上每个数字都能追溯到来源 URL，任何一帧都能通过改一个镜头文件修好 |
 | 数字人 / 口播工具（HeyGen、Synthesia） | 一个数字人读稿 | 没有主播；用 MG 图形把机制画出来，解说词驱动画面 |

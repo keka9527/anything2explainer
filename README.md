@@ -1,4 +1,4 @@
-# anything2explainer
+# keka-anything-explainer
 
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-D97757?logo=anthropic&logoColor=white)](https://claude.com/claude-code)
 [![Codex](https://img.shields.io/badge/Codex-skill-000000)](https://openai.com/codex)
@@ -7,7 +7,7 @@
 
 **English** | [简体中文](README_ZH.md)
 
-**Topic, article, document, or public WeChat link in; narrated explainer video out.** anything2explainer is a [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill that produces an original black-canvas motion-graphics explainer with TTS voiceover, subtitles, and a chapter progress bar, in Chinese or English. Visuals are primarily drawn in [Remotion](https://remotion.dev) (React + TypeScript); approved and manifested article images may appear briefly, while protected video streams are never downloaded.
+**Topic, article, document, or public WeChat link in; narrated explainer video out.** keka-anything-explainer is a Keka-maintained [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) Skill that produces an original black-canvas motion-graphics explainer with TTS voiceover, subtitles, and a chapter progress bar, in Chinese or English. Visuals are primarily drawn in [Remotion](https://remotion.dev) (React + TypeScript); approved and manifested article images may appear briefly, while protected video streams are never downloaded.
 
 It is not a CLI. What ships here is the whole method an AI coding agent needs to finish the film: a compilable Remotion template, a primitives and lighting library, tooling for voiceover / storyboard / rendering / quantitative QC, written style and motion specs, a multi-agent division-of-labour protocol, and one complete reference film as the quality bar.
 
@@ -50,9 +50,9 @@ Chapter count is not tied to length. One chapter that goes deep or several short
 For natural Chinese narration, copy `template/.env.example` to `.env` in the generated video project, set `VOLCENGINE_TTS_API_KEY` locally, and run `python scripts/tts_build.py script/narration.txt`. Blank lines delimit paragraphs; each paragraph is synthesized in one request and subtitles are aligned afterwards. See [`reference/volcengine-tts.md`](reference/volcengine-tts.md).
 
 ```bash
-git clone https://github.com/Vincentwei1021/anything2explainer.git
-ln -s "$PWD/anything2explainer" ~/.claude/skills/anything2explainer   # Claude Code
-ln -s "$PWD/anything2explainer" ~/.codex/skills/anything2explainer    # Codex
+git clone https://github.com/keka9527/anything2explainer.git keka-anything-explainer
+ln -s "$PWD/keka-anything-explainer" ~/.claude/skills/keka-anything-explainer   # Claude Code
+ln -s "$PWD/keka-anything-explainer" ~/.codex/skills/keka-anything-explainer    # Codex
 ```
 
 Dependencies:
@@ -142,7 +142,7 @@ The run stops and waits for you at exactly four points instead of ploughing thro
 
 ## How it compares
 
-| Tool class | What it produces | Where anything2explainer differs |
+| Tool class | What it produces | Where keka-anything-explainer differs |
 |---|---|---|
 | Generative video models (Sora, Veo, Runway) | Footage synthesized from a prompt | Deterministic code, not pixels. Every number on screen traces to a source URL, and any frame can be fixed by editing one shot file |
 | Avatar / presenter tools (HeyGen, Synthesia) | A digital presenter reading a script | No presenter. Motion-graphics diagrams that show the mechanism, with the narration driving the visuals |

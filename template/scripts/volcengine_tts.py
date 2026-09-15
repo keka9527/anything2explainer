@@ -1,7 +1,7 @@
 """Volcengine Seed TTS 2.0 SSE adapter and local subtitle alignment.
 
 The wire format follows ByteDance's Apache-2.0 AgentKit TTS sample, while this
-implementation is purpose-built for anything2explainer. Credentials are read
+implementation is purpose-built for keka-anything-explainer. Credentials are read
 from the environment only and are never written to cache or timeline files.
 """
 import base64
@@ -37,7 +37,7 @@ async def synthesize(text, api_key, speaker, resource_id='seed-tts-2.0', app_id=
     except ImportError as exc:
         raise RuntimeError('火山 TTS 需要 httpx：pip install httpx') from exc
     body = {
-        'user': {'uid': 'anything2explainer'},
+        'user': {'uid': 'keka-anything-explainer'},
         'req_params': {
             'text': text,
             'speaker': speaker,

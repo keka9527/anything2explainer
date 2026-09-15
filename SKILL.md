@@ -1,9 +1,9 @@
 ---
-name: anything2explainer
+name: keka-anything-explainer
 description: 把主题、文章、文档或公开微信公众号链接制作成带配音、字幕、章节进度条和可选原文图片的黑底 MG 科普视频；支持中文或英文、Remotion 代码动画、帧级时间轴、前 30 秒打样与成片 QC。Use for sourced explainer videos or article-to-video work; not for cloning an existing video, talking-head footage, or bypassing protected media.
 ---
 
-# anything2explainer
+# keka-anything-explainer
 
 把任意技术或知识主题做成一条**原创、可追溯、可复现**的科普讲解视频。默认视觉为黑底幕底（星点雾底或点阵波）+ 白线条图形 + 青绿色重点 `#14B8A6` + 超粗黑体 + 44px 白字黑边字幕 + 章节进度条 + 顶部 HUD。历史 RAG 样片仍是紫色主题；构图、节奏与质量以样片为标尺，颜色以当前模板令牌为准。
 
